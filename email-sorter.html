@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Email Sorter</title>
+<style>
+:root {
+  --bg: #f4f6fb;
+  --card-bg: #fff;
+  --primary: #4a90e2;
+  --text: #333;
+  --radius: 14px;
+  --shadow: 0 4px 20px rgba(0,0,0,0.08);
+}
+body {
+  font-family: 'Inter', Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: 100vh;
+  margin: 0;
+  padding: 20px;
+}
+.container {
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 30px;
+  width: 100%;
+  max-width: 700px;
+}
+h1 { font-size: 1.6rem; margin-bottom: 0.5rem; text-align: center; color: var(--primary); }
+p { text-align: center; color: #555; margin-bottom: 20px; }
+textarea {
+  width: 100%;
+  height: 160px;
+  border-radius: var(--radius);
+  border: 1px solid #ddd;
+  padding: 12px;
+  font-family: monospace;
+  font-size: 14px;
+  resize: vertical;
+  box-sizing: border-box;
+  margin-bottom: 15px;
+}
+textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(74,144,226,0.2);
+}
+.button-group {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+button {
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-size: 15px;
+  transition: background 0.25s, transform 0.15s;
+}
+button:hover { background: #357abd; transform: translateY(-1px); }
+button.secondary { background: #eee; color: #333; }
+button.secondary:hover { background: #ddd; }
+.warning {
+  color: #d9534f;
+  text-align: center;
+  margin-bottom: 10px;
+  font-weight: bold;
+}
+footer { text-align: center; font-size: 13px; color: #888; margin-top: 10px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>📧 Email Sorter</h1>
+  <p>Paste your emails below.</p>
+
+  <div class="warning" id="warning"></div>
+
+  <textarea id="input" placeholder="Paste your emails here... Put space or comma between emails for best results."></textarea>
+
+  <div class="button-group">
+    <button onclick="sortEmails()">Sort Alphabetically</button>
+    <button onclick="sortByDomain()">Sort by Domain</button>
+    <button onclick="removeDuplicates()">Remove Duplicates</button>
+    <button class="secondary" onclick="copyOutput()">Copy Output</button>
+  </div>
+
+  <textarea id="output" placeholder="Your sorted emails appear here..."></textarea>
+
+  <footer>Made with ❤️ — Works offline, no data leaves your browser.</footer>
+</div>
+
+<script>
+const MAX_EMAILS = 5000;
+
+// Aggressive clean: remove zero-width chars
+function aggressiveCleanInput(input) {
+  return input.replace(/[\u200B-\u200D\uFEFF]+/g, '');
+}
+
+// Split glued emails safely
+function splitGluedEmails(input) {
+  input = aggressiveCleanInput(input);
+  // Insert space between glued emails
+  input = input.replace(/([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.(?:[a-zA-Z]{2,}\.)*[a-zA-Z]{2,})(?=[a-zA-Z0-9._%+-]+@)/g, '$1 ');
+  return input.split(/\s+/).filter(s => s.trim() !== '');
+}
+
+// Extract only valid emails
+function extractEmails(input) {
+  const candidates = splitGluedEmails(input);
+  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}(?:\.[a-zA-Z]{2,})*$/;
+  return candidates.filter(e => emailRegex.test(e.trim()));
+}
+
+// Get emails and show large list warning
+function getEmails() {
+  const raw = document.getElementById('input').value;
+  const emails = extractEmails(raw);
+  const warningEl = document.getElementById('warning');
+  if (emails.length > MAX_EMAILS) {
+    warningEl.textContent = `⚠️ Warning: You have ${emails.length} emails. Performance may be slow.`;
+  } else {
+    warningEl.textContent = '';
+  }
+  return emails;
+}
+
+// Sort alphabetically
+function sortEmails() {
+  const emails = getEmails();
+  showOutput(emails.sort((a,b)=>a.toLowerCase().localeCompare(b.toLowerCase())));
+}
+
+// Sort by domain
+function sortByDomain() {
+  const emails = getEmails();
+  showOutput(emails.sort((a,b)=>{
+    const domainA = a.split('@')[1]||'';
+    const domainB = b.split('@')[1]||'';
+    return domainA.localeCompare(domainB)||a.localeCompare(b);
+  }));
+}
+
+// Remove duplicates
+function removeDuplicates() {
+  const emails = getEmails();
+  const unique = [...new Set(emails.map(e=>e.toLowerCase()))];
+  showOutput(unique);
+}
+
+// Show output with single-space separation
+function showOutput(list){
+  const outputArea = document.getElementById('output');
+  outputArea.value = list.join(' ');
+  outputArea.style.backgroundColor = '#fff';
+}
+
+// Copy output to clipboard
+function copyOutput() {
+  const output = document.getElementById('output');
+  output.select();
+  document.execCommand('copy');
+  alert('✅ Copied to clipboard!');
+}
+</script>
+</body>
+</html>
