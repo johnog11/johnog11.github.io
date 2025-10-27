@@ -19,10 +19,8 @@ body {
   color: var(--text);
   display: flex;
   justify-content: center;
-  align-items: flex-start;
-  min-height: 100vh;
-  margin: 0;
   padding: 20px;
+  margin: 0;
 }
 .container {
   background: var(--card-bg);
@@ -32,8 +30,9 @@ body {
   width: 100%;
   max-width: 700px;
 }
-h1 { font-size: 1.6rem; margin-bottom: 0.5rem; text-align: center; color: var(--primary); }
-p { text-align: center; color: #555; margin-bottom: 20px; }
+h1 { font-size: 1.8rem; text-align: center; color: var(--primary); margin-bottom: 10px; }
+h2 { color: var(--primary); margin-top: 20px; }
+p { margin-bottom: 10px; }
 textarea {
   width: 100%;
   height: 160px;
@@ -71,23 +70,32 @@ button {
 button:hover { background: #357abd; transform: translateY(-1px); }
 button.secondary { background: #eee; color: #333; }
 button.secondary:hover { background: #ddd; }
-.warning {
-  color: #d9534f;
-  text-align: center;
-  margin-bottom: 10px;
-  font-weight: bold;
-}
-footer { text-align: center; font-size: 13px; color: #888; margin-top: 10px; }
+.warning { color: #d9534f; text-align: center; margin-bottom: 10px; font-weight: bold; }
+footer { text-align: center; font-size: 13px; color: #888; margin-top: 20px; }
+.ad-placeholder { text-align:center; margin:15px 0; padding: 10px; background:#eef; border-radius:8px; font-size:14px; color:#555; }
 </style>
 </head>
 <body>
 <div class="container">
   <h1>📧 Email Sorter</h1>
-  <p>Paste your emails below.</p>
+
+  <p>Welcome to the Email Sorter! This simple web tool helps you quickly organize, sort, and clean your email lists.</p>
+
+  <div class="ad-placeholder">
+    <!-- Insert AdSense code here -->
+    Your ad could appear here
+  </div>
+
+  <h2>How to Use</h2>
+  <p>1. Paste your email list into the input box below.</p>
+  <p>2. You can separate emails with <strong>spaces, commas, or line breaks</strong>. The tool will automatically handle all of these.</p>
+  <p>3. Click “Sort Alphabetically” or “Sort by Domain” to organize your emails.</p>
+  <p>4. Use “Remove Duplicates” to clean your list.</p>
+  <p>5. Copy the sorted list using the “Copy Output” button.</p>
 
   <div class="warning" id="warning"></div>
 
-  <textarea id="input" placeholder="Paste your emails here... Put space or comma between emails for best results."></textarea>
+  <textarea id="input" placeholder="Paste your emails here..."></textarea>
 
   <div class="button-group">
     <button onclick="sortEmails()">Sort Alphabetically</button>
@@ -98,33 +106,36 @@ footer { text-align: center; font-size: 13px; color: #888; margin-top: 10px; }
 
   <textarea id="output" placeholder="Your sorted emails appear here..."></textarea>
 
-  <footer>Made with ❤️ — Works offline, no data leaves your browser.</footer>
+  <h2>FAQs</h2>
+  <p><strong>Q: Can I paste thousands of emails?</strong><br>A: Yes! The tool warns if your list exceeds 5000 emails.</p>
+  <p><strong>Q: Will duplicates be removed automatically?</strong><br>A: No, you need to click “Remove Duplicates”.</p>
+  <p><strong>Q: Are multi-part domains supported?</strong><br>A: Yes, domains like .com.au or .co.uk are handled correctly.</p>
+  <p><strong>Q: Can I separate emails with commas, spaces, or new lines?</strong><br>A: Yes! The tool automatically splits emails regardless of separator.</p>
+
+  <footer>Made with ❤️ by You — Works offline, no data leaves your browser.</footer>
 </div>
 
 <script>
 const MAX_EMAILS = 5000;
 
-// Aggressive clean: remove zero-width chars
 function aggressiveCleanInput(input) {
   return input.replace(/[\u200B-\u200D\uFEFF]+/g, '');
 }
 
-// Split glued emails safely
 function splitGluedEmails(input) {
   input = aggressiveCleanInput(input);
-  // Insert space between glued emails
+  // Insert space between glued emails like: john@gmail.comjane@yahoo.com
   input = input.replace(/([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.(?:[a-zA-Z]{2,}\.)*[a-zA-Z]{2,})(?=[a-zA-Z0-9._%+-]+@)/g, '$1 ');
-  return input.split(/\s+/).filter(s => s.trim() !== '');
+  // Split by space, comma, or new line
+  return input.split(/[\s,]+/).filter(s => s.trim() !== '');
 }
 
-// Extract only valid emails
 function extractEmails(input) {
   const candidates = splitGluedEmails(input);
   const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}(?:\.[a-zA-Z]{2,})*$/;
   return candidates.filter(e => emailRegex.test(e.trim()));
 }
 
-// Get emails and show large list warning
 function getEmails() {
   const raw = document.getElementById('input').value;
   const emails = extractEmails(raw);
@@ -137,13 +148,11 @@ function getEmails() {
   return emails;
 }
 
-// Sort alphabetically
 function sortEmails() {
   const emails = getEmails();
   showOutput(emails.sort((a,b)=>a.toLowerCase().localeCompare(b.toLowerCase())));
 }
 
-// Sort by domain
 function sortByDomain() {
   const emails = getEmails();
   showOutput(emails.sort((a,b)=>{
@@ -153,21 +162,18 @@ function sortByDomain() {
   }));
 }
 
-// Remove duplicates
 function removeDuplicates() {
   const emails = getEmails();
   const unique = [...new Set(emails.map(e=>e.toLowerCase()))];
   showOutput(unique);
 }
 
-// Show output with single-space separation
 function showOutput(list){
   const outputArea = document.getElementById('output');
   outputArea.value = list.join(' ');
   outputArea.style.backgroundColor = '#fff';
 }
 
-// Copy output to clipboard
 function copyOutput() {
   const output = document.getElementById('output');
   output.select();
