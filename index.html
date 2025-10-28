@@ -21,6 +21,7 @@ body {
   justify-content: center;
   padding: 20px;
   margin: 0;
+  transition: background 0.3s, color 0.3s;
 }
 .container {
   background: var(--card-bg);
@@ -29,13 +30,15 @@ body {
   padding: 30px;
   width: 100%;
   max-width: 700px;
+  transition: background 0.3s, color 0.3s;
+  position: relative;
 }
 h1 { font-size: 1.8rem; text-align: center; color: var(--primary); margin-bottom: 10px; }
 h2 { color: var(--primary); margin-top: 20px; }
 p { margin-bottom: 10px; }
 textarea {
   width: 100%;
-  height: 160px;
+  height: clamp(120px, 25vh, 240px);
   border-radius: var(--radius);
   border: 1px solid #ddd;
   padding: 12px;
@@ -44,6 +47,7 @@ textarea {
   resize: vertical;
   box-sizing: border-box;
   margin-bottom: 15px;
+  transition: background 0.3s, color 0.3s, border-color 0.3s;
 }
 textarea:focus {
   outline: none;
@@ -72,26 +76,104 @@ button.secondary { background: #eee; color: #333; }
 button.secondary:hover { background: #ddd; }
 .warning { color: #d9534f; text-align: center; margin-bottom: 10px; font-weight: bold; }
 footer { text-align: center; font-size: 13px; color: #888; margin-top: 20px; }
-.ad-placeholder { text-align:center; margin:15px 0; padding: 10px; background:#eef; border-radius:8px; font-size:14px; color:#555; }
+.ad-placeholder { text-align:center; margin:15px 0; padding: 10px; background:#eef; border-radius:8px; font-size:14px; color:#555; transition: background 0.3s, color 0.3s; }
+
+/* Night mode */
+body.night-mode {
+  background: #1e1e2f;
+  color: #ddd;
+}
+body.night-mode .container {
+  background: #2a2a3d;
+  color: #ddd;
+}
+body.night-mode textarea {
+  background: #3a3a4f;
+  color: #eee;
+  border-color: #555;
+}
+body.night-mode button {
+  background: #4a90e2;
+  color: #fff;
+}
+body.night-mode button.secondary {
+  background: #555;
+  color: #ddd;
+}
+body.night-mode .ad-placeholder {
+  background: #444;
+  color: #bbb;
+}
+body.night-mode .warning {
+  color: #f28b82;
+}
+
+/* Night mode toggle switch with icons */
+.toggle-container {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 18px;
+}
+.switch {
+  position: relative;
+  width: 50px;
+  height: 28px;
+}
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0; left: 0;
+  right: 0; bottom: 0;
+  background-color: #ccc;
+  transition: 0.4s;
+  border-radius: 6px;
+}
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 22px;
+  width: 22px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: 0.4s;
+  border-radius: 4px;
+}
+input:checked + .slider {
+  background-color: #4a90e2;
+}
+input:checked + .slider:before {
+  transform: translateX(22px);
+}
 </style>
 </head>
 <body>
 <div class="container">
-  <h1>📧 Email Sorter</h1>
-
-  <p>Welcome to the Email Sorter! This simple web tool helps you quickly organize, sort, and clean your email lists.</p>
-
-  <div class="ad-placeholder">
-    <!-- Insert AdSense code here -->
-    Your ad could appear here
+  <div class="toggle-container">
+    <span id="toggleIcon">🌙</span>
+    <label class="switch">
+      <input type="checkbox" id="nightModeToggle" onchange="toggleNightModeSwitch()">
+      <span class="slider"></span>
+    </label>
   </div>
+
+  <h1>📧 Email Sorter</h1>
+  <p>Welcome to the Email Sorter! This simple web tool helps you quickly organize, sort, and clean your email lists.</p>
+  <div class="ad-placeholder">Ad space</div>
 
   <h2>How to Use</h2>
   <p>1. Paste your email list into the input box below.</p>
-  <p>2. You can separate emails with <strong>spaces, commas, or line breaks</strong>. The tool will automatically handle all of these.</p>
-  <p>3. Click “Sort Alphabetically” or “Sort by Domain” to organize your emails.</p>
-  <p>4. Use “Remove Duplicates” to clean your list.</p>
-  <p>5. Copy the sorted list using the “Copy Output” button.</p>
+  <p>2. The sorter automatically removes Outlook-style names like <code>"John Doe" &lt;john.doe@email.com&gt;</code> when sorting.</p>
+  <p>3. Use the buttons below to <strong>sort</strong>, <strong>remove duplicates</strong>, <strong>copy</strong>, or <strong>clear output</strong>.</p>
 
   <div class="warning" id="warning"></div>
 
@@ -99,86 +181,95 @@ footer { text-align: center; font-size: 13px; color: #888; margin-top: 20px; }
 
   <div class="button-group">
     <button onclick="sortEmails()">Sort Alphabetically</button>
-    <button onclick="sortByDomain()">Sort by Domain</button>
     <button onclick="removeDuplicates()">Remove Duplicates</button>
     <button class="secondary" onclick="copyOutput()">Copy Output</button>
+    <button class="secondary" onclick="clearOutput()">Clear Output</button>
   </div>
 
   <textarea id="output" placeholder="Your sorted emails appear here..."></textarea>
 
   <h2>FAQs</h2>
   <p><strong>Q: Can I paste thousands of emails?</strong><br>A: Yes! The tool warns if your list exceeds 5000 emails.</p>
-  <p><strong>Q: Will duplicates be removed automatically?</strong><br>A: No, you need to click “Remove Duplicates”.</p>
-  <p><strong>Q: Are multi-part domains supported?</strong><br>A: Yes, domains like .com.au or .co.uk are handled correctly.</p>
-  <p><strong>Q: Can I separate emails with commas, spaces, or new lines?</strong><br>A: Yes! The tool automatically splits emails regardless of separator.</p>
+  <p><strong>Q: Does it work with Outlook exports?</strong><br>A: Yes! It automatically cleans up names during sorting.</p>
+  <p><strong>Q: Can I use this offline?</strong><br>A: Yes! Everything runs in your browser; no data leaves your device.</p>
 
   <footer>Made with ❤️ by You — Works offline, no data leaves your browser.</footer>
 </div>
 
 <script>
-const MAX_EMAILS = 5000;
-
-function aggressiveCleanInput(input) {
-  return input.replace(/[\u200B-\u200D\uFEFF]+/g, '');
-}
-
-function splitGluedEmails(input) {
-  input = aggressiveCleanInput(input);
-  // Insert space between glued emails like: john@gmail.comjane@yahoo.com
-  input = input.replace(/([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.(?:[a-zA-Z]{2,}\.)*[a-zA-Z]{2,})(?=[a-zA-Z0-9._%+-]+@)/g, '$1 ');
-  // Split by space, comma, or new line
-  return input.split(/[\s,]+/).filter(s => s.trim() !== '');
-}
-
-function extractEmails(input) {
-  const candidates = splitGluedEmails(input);
-  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}(?:\.[a-zA-Z]{2,})*$/;
-  return candidates.filter(e => emailRegex.test(e.trim()));
-}
-
-function getEmails() {
-  const raw = document.getElementById('input').value;
-  const emails = extractEmails(raw);
-  const warningEl = document.getElementById('warning');
-  if (emails.length > MAX_EMAILS) {
-    warningEl.textContent = `⚠️ Warning: You have ${emails.length} emails. Performance may be slow.`;
-  } else {
-    warningEl.textContent = '';
+document.addEventListener('DOMContentLoaded', () => {
+  const nightMode = localStorage.getItem('nightMode') === 'true';
+  if (nightMode) {
+    document.body.classList.add('night-mode');
+    document.getElementById('nightModeToggle').checked = true;
+    document.getElementById('toggleIcon').textContent = '☀️';
   }
-  return emails;
+});
+
+function toggleNightModeSwitch() {
+  const isNight = document.getElementById('nightModeToggle').checked;
+  document.body.classList.toggle('night-mode', isNight);
+  localStorage.setItem('nightMode', isNight);
+  document.getElementById('toggleIcon').textContent = isNight ? '☀️' : '🌙';
 }
 
+// Get emails from output if exists, else input (and clean Outlook names)
+function getCurrentEmails() {
+  const outputText = document.getElementById('output').value.trim();
+  if (outputText) return outputText.split(/\r?\n/).filter(Boolean);
+
+  const raw = document.getElementById('input').value;
+  const cleaned = raw
+    .replace(/"[^"]*"\s*<([^>]+)>/g, '$1')
+    .replace(/\b[\w\s]+\s*<([^>]+)>/g, '$1')
+    .replace(/[<>"]/g, '')
+    .replace(/;/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  return cleaned.split(/\s+/).filter(Boolean);
+}
+
+// Sort alphabetically
 function sortEmails() {
-  const emails = getEmails();
-  showOutput(emails.sort((a,b)=>a.toLowerCase().localeCompare(b.toLowerCase())));
+  const emails = getCurrentEmails();
+  emails.sort((a,b) => a.toLowerCase().localeCompare(b.toLowerCase()));
+  showOutput(emails);
 }
 
-function sortByDomain() {
-  const emails = getEmails();
-  showOutput(emails.sort((a,b)=>{
-    const domainA = a.split('@')[1]||'';
-    const domainB = b.split('@')[1]||'';
-    return domainA.localeCompare(domainB)||a.localeCompare(b);
-  }));
-}
-
+// Remove duplicates (preserve order)
 function removeDuplicates() {
-  const emails = getEmails();
-  const unique = [...new Set(emails.map(e=>e.toLowerCase()))];
+  const emails = getCurrentEmails();
+  const seen = new Set();
+  const unique = emails.filter(e => {
+    const lower = e.toLowerCase();
+    if (seen.has(lower)) return false;
+    seen.add(lower);
+    return true;
+  });
   showOutput(unique);
 }
 
-function showOutput(list){
-  const outputArea = document.getElementById('output');
-  outputArea.value = list.join(' ');
-  outputArea.style.backgroundColor = '#fff';
+// Show output in textarea
+function showOutput(list) {
+  document.getElementById('output').value = list.join('\n');
+  document.getElementById('warning').textContent = `✅ ${list.length} emails currently in output.`;
 }
 
-function copyOutput() {
-  const output = document.getElementById('output');
-  output.select();
-  document.execCommand('copy');
-  alert('✅ Copied to clipboard!');
+// Copy output to clipboard
+async function copyOutput() {
+  const output = document.getElementById('output').value;
+  try {
+    await navigator.clipboard.writeText(output);
+    alert('✅ Copied to clipboard!');
+  } catch {
+    alert('⚠️ Copy failed. Please copy manually.');
+  }
+}
+
+// Clear output
+function clearOutput() {
+  document.getElementById('output').value = '';
+  document.getElementById('warning').textContent = '✅ Output cleared.';
 }
 </script>
 </body>
